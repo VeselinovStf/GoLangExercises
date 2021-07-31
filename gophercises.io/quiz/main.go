@@ -5,57 +5,63 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
-	"strconv"
 )
 
+type Question struct{
+	Ask string
+	Answere string
+}
+
+type Quiz struct{
+	Questions []Question
+	Correct int
+	Total int
+}
+
+func ParseQuestions(text [][]string) ([]Question, error){
+	var questions []Question
+
+	for _ ,t := range text{
+		question := t[0]
+		answere := t[1]
+
+		questions = append(questions, Question{Ask: question, Answere: answere})
+	}
+
+	return questions,nil
+}
+
 func main() {
-	filename := flag.String("csv", "problems.csv", "Problems csv file")
+	filename := flag.String("csv", "problems.csv", "Problems csv file in format <question>,<answere>")
 	flag.Parse()
 
 	f, err := os.Open(*filename)
-	validate(err, "problems csv file not found")
+	validate(err, "Csv file not found!")
 
 	r := csv.NewReader(f)
 	scanner := bufio.NewScanner(os.Stdin)
 
-	totalQuestions := 0
-	correct := 0
-	for {
-		line, err := r.Read()
-		if err == io.EOF {
-			break
-		}
+	lines, err := r.ReadAll()
+	validate(err, "Csv file: read error")
 
-		validate(err, "csv file read error")
+	parsedLines, err := ParseQuestions(lines)
+	validate(err, "Can't parse data from csv file")
 
-		question := line[0]
-		answere, err := strconv.Atoi(line[1])
+	quiz := Quiz{Questions: parsedLines, Total: len(parsedLines)}
 
-		validate(err, "can't parse answere")
-
-		fmt.Printf("Question: %s=", question)
-
+	for _, question := range quiz.Questions{
+		fmt.Printf("Question: %s=", question.Ask)
 		scanner.Scan()
-
-		validate(scanner.Err(), "read input error")
-
+		validate(scanner.Err(), "read user input error")
 		text := scanner.Text()
-
-		userAnswere, err := strconv.Atoi(text)
-
-		validate(err, "can't parse answere")
-
-		if userAnswere == answere {
-			correct++
+		if text == question.Answere {
+			quiz.Correct++
 		}
-
-		totalQuestions++
 	}
 
-	fmt.Printf("Test Completed: Total Questions: %v, Correct Answeres: %v", totalQuestions, correct)
+	fmt.Printf("Test Completed: Total Questions: %v, Correct Answeres: %v", quiz.Total, quiz.Correct)
 }
 
 func validate(err error, message string) {
