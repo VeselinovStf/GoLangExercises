@@ -12,6 +12,8 @@ import (
 func main() {
 	filename := flag.String("csv", "problems.csv", "Problems csv file in format <question>,<answere>")
 	timeLimit := flag.Int("time", 30, "Question time limit in seconds")
+	shufle := flag.Bool("shufle", false, "Shuffle the quiz order.")
+
 	flag.Parse()
 
 	f, err := os.Open(*filename)
@@ -26,6 +28,11 @@ func main() {
 	quiz := Quiz{}
 
 	quiz.ParseQuestions(lines)
+
+	if *shufle {
+		quiz.ShufleQuestions()
+	}
+
 	quiz.Run(scanner, *timeLimit)
 
 	quiz.PrintResult()

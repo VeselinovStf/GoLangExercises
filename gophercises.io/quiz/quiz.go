@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 )
@@ -37,7 +38,7 @@ func (q *Quiz) Run(scanner *bufio.Scanner, timeLimit int) {
 			fmt.Println("Time limit! Answer Faster next time!")
 			return
 		case text := <-answere:
-			if strings.EqualFold(text,question.Answere) {
+			if strings.EqualFold(text, question.Answere) {
 				q.Correct++
 			}
 		}
@@ -56,6 +57,19 @@ func (q *Quiz) ParseQuestions(text [][]string) {
 	}
 
 	q.Questions = questions
+}
+
+func (q *Quiz) ShufleQuestions() {
+	rand.Seed(time.Now().Unix())
+	shufled := make([]Question,0)
+
+	for len(q.Questions) > 0 {
+		r := rand.Intn(len(q.Questions))
+		shufled = append(shufled, q.Questions[r])
+		q.Questions = append(q.Questions[:r], q.Questions[r+1:]...)
+	}
+
+	q.Questions = shufled
 }
 
 func (q *Quiz) PrintResult() {
