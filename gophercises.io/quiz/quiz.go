@@ -37,7 +37,7 @@ func (q *Quiz) Run(scanner *bufio.Scanner, timeLimit int) {
 			fmt.Println("Time limit! Answer Faster next time!")
 			return
 		case text := <-answere:
-			if text == question.Answere {
+			if strings.EqualFold(text,question.Answere) {
 				q.Correct++
 			}
 		}
