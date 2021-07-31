@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type Quiz struct {
@@ -16,15 +17,31 @@ type Question struct {
 	Answere string
 }
 
-func (q *Quiz) Run(scanner *bufio.Scanner) {
+func (q *Quiz) Run(scanner *bufio.Scanner, timeLimit int) {
+	timer := time.NewTimer(time.Duration(timeLimit) * time.Second)
+
 	for i, question := range q.Questions {
 		fmt.Printf("Question %v: %s = ", i+1, question.Ask)
-		scanner.Scan()
-		validate(scanner.Err(), "read user input error")
-		text := strings.TrimSpace(scanner.Text())
-		if text == question.Answere {
-			q.Correct++
+
+		answere := make(chan string)
+
+		go func() {
+			scanner.Scan()
+			validate(scanner.Err(), "read user input error")
+			text := strings.TrimSpace(scanner.Text())
+			answere <- text
+		}()
+
+		select {
+		case <-timer.C:
+			fmt.Println("Time limit! Answer Faster next time!")
+			return
+		case text := <-answere:
+			if text == question.Answere {
+				q.Correct++
+			}
 		}
+
 	}
 }
 

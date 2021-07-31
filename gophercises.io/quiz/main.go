@@ -11,6 +11,7 @@ import (
 
 func main() {
 	filename := flag.String("csv", "problems.csv", "Problems csv file in format <question>,<answere>")
+	timeLimit := flag.Int("time", 30, "Question time limit in seconds")
 	flag.Parse()
 
 	f, err := os.Open(*filename)
@@ -25,7 +26,7 @@ func main() {
 	quiz := Quiz{}
 
 	quiz.ParseQuestions(lines)
-	quiz.Run(scanner)
+	quiz.Run(scanner, *timeLimit)
 
 	quiz.PrintResult()
 }
