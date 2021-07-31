@@ -21,13 +21,13 @@ type Quiz struct{
 }
 
 func ParseQuestions(text [][]string) ([]Question, error){
-	var questions []Question
+	questions := make([]Question, len(text))
 
-	for _ ,t := range text{
-		question := t[0]
-		answere := t[1]
-
-		questions = append(questions, Question{Ask: question, Answere: answere})
+	for i ,t := range text{
+		questions[i] = Question{
+			Ask: t[0], 
+			Answere: t[1],
+		}
 	}
 
 	return questions,nil
