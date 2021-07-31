@@ -3,7 +3,9 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 )
@@ -18,9 +20,12 @@ type Question struct {
 	Answere string
 }
 
-func (q *Quiz) Run(scanner *bufio.Scanner, timeLimit int) {
+// Run quiz
+func (q *Quiz) Run(timeLimit int) {
 	timer := time.NewTimer(time.Duration(timeLimit) * time.Second)
+	scanner := bufio.NewScanner(os.Stdin)
 
+	defer timer.Stop()
 	for i, question := range q.Questions {
 		fmt.Printf("Question %v: %s = ", i+1, question.Ask)
 
@@ -28,7 +33,10 @@ func (q *Quiz) Run(scanner *bufio.Scanner, timeLimit int) {
 
 		go func() {
 			scanner.Scan()
-			validate(scanner.Err(), "read user input error")
+			if scanner.Err() != nil {
+				log.Fatalf("%s: %s", "Can't read user input correctly: ", scanner.Err().Error())
+			}
+
 			text := strings.TrimSpace(scanner.Text())
 			answere <- text
 		}()
@@ -44,8 +52,10 @@ func (q *Quiz) Run(scanner *bufio.Scanner, timeLimit int) {
 		}
 
 	}
+
 }
 
+// ParseQuestions Parses quiz questions
 func (q *Quiz) ParseQuestions(text [][]string) {
 	questions := make([]Question, len(text))
 
@@ -59,9 +69,10 @@ func (q *Quiz) ParseQuestions(text [][]string) {
 	q.Questions = questions
 }
 
+// ShufleQuestions Shufles the questions
 func (q *Quiz) ShufleQuestions() {
 	rand.Seed(time.Now().Unix())
-	shufled := make([]Question,0)
+	shufled := make([]Question, 0)
 
 	for len(q.Questions) > 0 {
 		r := rand.Intn(len(q.Questions))
@@ -72,6 +83,7 @@ func (q *Quiz) ShufleQuestions() {
 	q.Questions = shufled
 }
 
+// PrintResult print final result to client
 func (q *Quiz) PrintResult() {
 	fmt.Printf("Test Completed: Total Questions: %v, Correct Answeres: %v", len(q.Questions), q.Correct)
 }
