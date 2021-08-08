@@ -9,15 +9,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// YamlPath struct is representation of yaml map paths file
-type YamlPath struct {
-	Path string `yaml:"path"`
-	URL  string `yaml:"url"`
-}
-
-type jsonPath struct {
-	Path string `json:"path"`
-	URL  string `json:"url"`
+type pathData struct {
+	Path string
+	URL  string
 }
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -58,7 +52,7 @@ func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
-	pathMap := buildYAMLPathsMap(parsedYaml)
+	pathMap := buildPathsMap(parsedYaml)
 
 	return MapHandler(pathMap, fallback), nil
 }
@@ -85,13 +79,13 @@ func JSONHandler(j []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
-	paths := buildJSONPathsMap(jsonPath)
+	paths := buildPathsMap(jsonPath)
 
 	return MapHandler(paths, fallback), nil
 }
 
-func parseJSON(j []byte) ([]jsonPath, error) {
-	var path []jsonPath
+func parseJSON(j []byte) ([]pathData, error) {
+	var path []pathData
 	err := json.Unmarshal(j, &path)
 	if err != nil {
 		return nil, err
@@ -99,8 +93,8 @@ func parseJSON(j []byte) ([]jsonPath, error) {
 	return path, nil
 }
 
-func parseYaml(y []byte) ([]YamlPath, error) {
-	var pats []YamlPath
+func parseYaml(y []byte) ([]pathData, error) {
+	var pats []pathData
 	err := yaml.Unmarshal([]byte(y), &pats)
 	if err != nil {
 		return nil, err
@@ -109,7 +103,7 @@ func parseYaml(y []byte) ([]YamlPath, error) {
 	return pats, err
 }
 
-func buildYAMLPathsMap(p []YamlPath) map[string]string {
+func buildPathsMap(p []pathData) map[string]string {
 	pathMap := make(map[string]string)
 	for _, e := range p {
 		pathMap[e.Path] = e.URL
@@ -117,10 +111,3 @@ func buildYAMLPathsMap(p []YamlPath) map[string]string {
 	return pathMap
 }
 
-func buildJSONPathsMap(p []jsonPath) map[string]string {
-	pathMap := make(map[string]string)
-	for _, e := range p {
-		pathMap[e.Path] = e.URL
-	}
-	return pathMap
-}
