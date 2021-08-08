@@ -2,8 +2,17 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
+
+	"gopkg.in/yaml.v2"
 )
+
+// YamlPath struct is representation of yaml map paths file
+type YamlPath struct {
+	Path string `yaml:"path"`
+	URL  string `yaml:"url"`
+}
 
 // MapHandler will return an http.HandlerFunc (which also
 // implements http.Handler) that will attempt to map any
@@ -39,6 +48,29 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	// TODO: Implement this...
-	return nil, nil
+	parsedYaml, err := parseYaml(yml)
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+	pathMap := buildPathsMap(parsedYaml)
+
+	return MapHandler(pathMap, fallback), nil
+}
+
+func parseYaml(y []byte) ([]YamlPath, error) {
+	var pats []YamlPath
+	err := yaml.Unmarshal([]byte(y), &pats)
+	if err != nil {
+		return nil, err
+	}
+
+	return pats, err
+}
+
+func buildPathsMap(p []YamlPath) map[string]string {
+	pathMap := make(map[string]string)
+	for _, e := range p {
+		pathMap[e.Path] = e.URL
+	}
+	return pathMap
 }
