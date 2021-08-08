@@ -110,4 +110,3 @@ func buildPathsMap(p []pathData) map[string]string {
 	}
 	return pathMap
 }
-

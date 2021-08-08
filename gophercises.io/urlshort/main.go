@@ -28,17 +28,8 @@ func init() {
 }
 
 func main() {
-	yamlFileContent, err := readFile(yamlPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	yaml = yamlFileContent
-
-	jsonFileContent, err := readFile(jsonPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	json = jsonFileContent
+	yaml = loadContent(yamlPath)
+	json = loadContent(jsonPath)
 
 	mux := defaultMux()
 
@@ -78,4 +69,13 @@ func readFile(filePath *string) ([]byte, error) {
 		return nil, err
 	}
 	return c, nil
+}
+
+func loadContent(filePath *string) []byte {
+	content, err := readFile(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return content
 }
