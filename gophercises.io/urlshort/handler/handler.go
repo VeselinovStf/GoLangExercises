@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -12,6 +13,11 @@ import (
 type YamlPath struct {
 	Path string `yaml:"path"`
 	URL  string `yaml:"url"`
+}
+
+type jsonPath struct {
+	Path string `json:"path"`
+	URL  string `json:"url"`
 }
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -52,9 +58,45 @@ func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
-	pathMap := buildPathsMap(parsedYaml)
+	pathMap := buildYAMLPathsMap(parsedYaml)
 
 	return MapHandler(pathMap, fallback), nil
+}
+
+// JSONHandler will parse the provided JSON and then return
+// an http.HandlerFunc (which also implements http.Handler)
+// that will attempt to map any paths to their corresponding
+// URL. If the path is not provided in the JSON, then the
+// fallback http.Handler will be called instead.
+//
+// JSON is expected to be in the format:
+//
+//       [
+// 			  {
+// 				 "path" : "/http",
+//        		  "url" : "https://pkg.go.dev/net/http#HandleFunc"
+//             }
+//       ]
+//
+// The only errors that can be returned all related to having
+// invalid JSON data.
+func JSONHandler(j []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	jsonPath, err := parseJSON(j)
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+	paths := buildJSONPathsMap(jsonPath)
+
+	return MapHandler(paths, fallback), nil
+}
+
+func parseJSON(j []byte) ([]jsonPath, error) {
+	var path []jsonPath
+	err := json.Unmarshal(j, &path)
+	if err != nil {
+		return nil, err
+	}
+	return path, nil
 }
 
 func parseYaml(y []byte) ([]YamlPath, error) {
@@ -67,7 +109,15 @@ func parseYaml(y []byte) ([]YamlPath, error) {
 	return pats, err
 }
 
-func buildPathsMap(p []YamlPath) map[string]string {
+func buildYAMLPathsMap(p []YamlPath) map[string]string {
+	pathMap := make(map[string]string)
+	for _, e := range p {
+		pathMap[e.Path] = e.URL
+	}
+	return pathMap
+}
+
+func buildJSONPathsMap(p []jsonPath) map[string]string {
 	pathMap := make(map[string]string)
 	for _, e := range p {
 		pathMap[e.Path] = e.URL

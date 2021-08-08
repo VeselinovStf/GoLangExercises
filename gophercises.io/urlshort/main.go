@@ -13,12 +13,16 @@ import (
 
 var (
 	defaultYAML = "default.yaml"
+	defaultJSON = "default.json"
 	yaml        []byte
+	json        []byte
 	yamlPath    *string
+	jsonPath    *string
 )
 
 func init() {
 	yamlPath = flag.String("yaml", defaultYAML, "Read .yaml/.yml file from file system. Format: -path: url: ")
+	jsonPath = flag.String("json", defaultJSON, `Read .json file from file system. Format: [ { "path": "", "url": "" } ]`)
 
 	flag.Parse()
 }
@@ -30,6 +34,12 @@ func main() {
 	}
 	yaml = yamlFileContent
 
+	jsonFileContent, err := readFile(jsonPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	json = jsonFileContent
+
 	mux := defaultMux()
 
 	// Build the MapHandler using the mux as the fallback
@@ -39,16 +49,17 @@ func main() {
 	}
 
 	mapHandler := handler.MapHandler(pathsToUrls, mux)
-
-	// Build the YAMLHandler using the mapHandler as the
-	// fallback
-
 	yamlHandler, err := handler.YAMLHandler([]byte(yaml), mapHandler)
 	if err != nil {
 		log.Fatal(err)
 	}
+	jsonHandler, err := handler.JSONHandler(json, yamlHandler)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println("Starting the server on :8080")
-	http.ListenAndServe(":8080", yamlHandler)
+	http.ListenAndServe(":8080", jsonHandler)
 }
 
 func defaultMux() *http.ServeMux {
@@ -62,7 +73,7 @@ func hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func readFile(filePath *string) ([]byte, error) {
-	c, err := os.ReadFile(*yamlPath)
+	c, err := os.ReadFile(*filePath)
 	if err != nil {
 		return nil, err
 	}
