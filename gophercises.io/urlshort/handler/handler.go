@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"gopkg.in/yaml.v2"
+	"github.com/veselinovstf/exercises/GoLangExercises/gophercises.io/urlshort/db"
 )
 
 type pathData struct {
@@ -82,6 +83,20 @@ func JSONHandler(j []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	paths := buildPathsMap(jsonPath)
 
 	return MapHandler(paths, fallback), nil
+}
+
+// SQLHandler will use the provided SQLConnection and then return
+// an http.HandlerFunc (which also implements http.Handler)
+// that will attempt to map any paths to their corresponding
+// URL. If database connection return error, then the
+// fallback http.Handler will be called instead.
+func SQLHandler(connection db.SQLConnection , fallback http.Handler) (http.HandlerFunc, error) {
+	dbPaths, err := db.GetURLs(connection)
+		if err != nil {
+			return nil, err
+		}
+
+	return MapHandler(dbPaths, fallback), nil
 }
 
 func parseJSON(j []byte) ([]pathData, error) {
