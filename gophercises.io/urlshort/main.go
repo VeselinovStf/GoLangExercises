@@ -4,6 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -25,7 +26,7 @@ func init() {
 func main() {
 	yamlFileContent, err := readFile(yamlPath)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	yaml = yamlFileContent
 
@@ -36,7 +37,7 @@ func main() {
 		"/urlshort-godoc": "https://godoc.org/github.com/gophercises/urlshort",
 		"/yaml-godoc":     "https://godoc.org/gopkg.in/yaml.v2",
 	}
-	
+
 	mapHandler := handler.MapHandler(pathsToUrls, mux)
 
 	// Build the YAMLHandler using the mapHandler as the
@@ -44,7 +45,7 @@ func main() {
 
 	yamlHandler, err := handler.YAMLHandler([]byte(yaml), mapHandler)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	fmt.Println("Starting the server on :8080")
 	http.ListenAndServe(":8080", yamlHandler)
